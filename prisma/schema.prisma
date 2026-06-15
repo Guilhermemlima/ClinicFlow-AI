@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id               String   @id @default(cuid())
+  name             String
+  email            String   @unique
+  phone            String?
+  whatsappNumber   String?
+  specialty        String?
+  plan             Plan     @default(SOLO)
+  stripeCustomerId String?
+  stripeSubId      String?
+  isActive         Boolean  @default(true)
+  ticketMedio      Decimal? @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users            User[]
+  patients         Patient[]
+  appointments     Appointment[]
+  automations      Automation[]
+  messageTemplates MessageTemplate[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STAFF)
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Patient {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String
+  email        String?
+  birthDate    DateTime?
+  clinicId     String
+  clinic       Clinic    @relation(fields: [clinicId], references: [id])
+  lastVisit    DateTime?
+  totalVisits  Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  appointments Appointment[]
+  messages     Message[]
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  patientId   String
+  patient     Patient           @relation(fields: [patientId], references: [id])
+  clinicId    String
+  clinic      Clinic            @relation(fields: [clinicId], references: [id])
+  scheduledAt DateTime
+  duration    Int               @default(30)
+  status      AppointmentStatus @default(SCHEDULED)
+  procedure   String?
+  value       Decimal?          @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  reminders   Reminder[]
+}
+
+model Reminder {
+  id            String         @id @default(cuid())
+  appointmentId String
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id])
+  type          ReminderType
+  scheduledFor  DateTime
+  sentAt        DateTime?
+  status        ReminderStatus @default(PENDING)
+  messageId     String?
+  createdAt     DateTime       @default(now())
+}
+
+model Automation {
+  id         String          @id @default(cuid())
+  clinicId   String
+  clinic     Clinic          @relation(fields: [clinicId], references: [id])
+  name       String
+  trigger    String
+  isActive   Boolean         @default(true)
+  templateId String
+  template   MessageTemplate @relation(fields: [templateId], references: [id])
+  createdAt  DateTime        @default(now())
+}
+
+model MessageTemplate {
+  id          String       @id @default(cuid())
+  clinicId    String
+  clinic      Clinic       @relation(fields: [clinicId], references: [id])
+  name        String
+  body        String
+  type        TemplateType
+  createdAt   DateTime     @default(now())
+
+  automations Automation[]
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  patientId  String
+  patient    Patient   @relation(fields: [patientId], references: [id])
+  direction  Direction
+  content    String
+  whatsappId String?
+  intent     String?
+  sentAt     DateTime  @default(now())
+  readAt     DateTime?
+}
+
+enum Plan {
+  SOLO
+  CLINIC
+  PREMIUM
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+enum ReminderType {
+  HOURS_48
+  HOURS_2
+  REACTIVATION
+  POST_VISIT
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  RESPONDED
+}
+
+enum TemplateType {
+  CONFIRMATION
+  REMINDER
+  REACTIVATION
+  CANCELLATION
+  POST_VISIT
+}
+
+enum Direction {
+  OUTBOUND
+  INBOUND
+}
