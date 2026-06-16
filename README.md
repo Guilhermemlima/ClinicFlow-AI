@@ -1,4 +1,6 @@
-# ClinicFlow AI
+# ZenCli
+
+*Sua clínica fluindo sem esforço.*
 
 SaaS de automação da jornada do paciente para clínicas médicas, odontológicas e de estética. Reduz no-shows em até 35% via lembretes automáticos pelo WhatsApp com IA.
 

@@ -8,7 +8,7 @@ import { reactivateInactivePatients } from './reactivatePatients'
 // vercel.json (app/api/cron/send-reminders e app/api/cron/reactivate-patients).
 // Este arquivo continua útil para rodar localmente (`npm run jobs`) ou em
 // uma plataforma com processo persistente (Railway, Render, um VPS etc).
-console.log('[Scheduler] Starting ClinicFlow AI job scheduler...')
+console.log('[Scheduler] Starting ZenCli job scheduler...')
 
 // Run every 15 minutes — send pending reminders
 cron.schedule('*/15 * * * *', async () => {

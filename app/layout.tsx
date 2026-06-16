@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ClinicFlow AI — Automação de Consultas',
+  title: 'ZenCli — Sua clínica fluindo sem esforço',
   description: 'Reduza no-shows e aumente a receita da sua clínica com automação inteligente via WhatsApp.',
 }
 

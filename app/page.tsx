@@ -54,9 +54,9 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CF</span>
+              <span className="text-white font-bold text-sm">ZC</span>
             </div>
-            <span className="text-lg font-bold text-slate-900">ClinicFlow AI</span>
+            <span className="text-lg font-bold text-slate-900">ZenCli</span>
           </div>
           {session ? (
             <Link
@@ -89,8 +89,9 @@ export default async function LandingPage() {
         <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 leading-tight mb-6">
           Pare de perder pacientes<br />por falta de lembrete
         </h1>
+        <p className="text-sky-600 font-medium mb-4">Sua clínica fluindo sem esforço.</p>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-8">
-          O ClinicFlow AI confirma consultas, reativa pacientes inativos e responde
+          O ZenCli confirma consultas, reativa pacientes inativos e responde
           dúvidas pelo WhatsApp — automaticamente, com inteligência artificial,
           enquanto sua equipe foca no atendimento.
         </p>
@@ -219,7 +220,7 @@ export default async function LandingPage() {
 
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-sm text-slate-400">
-          <span>© {new Date().getFullYear()} ClinicFlow AI</span>
+          <span>© {new Date().getFullYear()} ZenCli</span>
           <div className="flex items-center gap-6">
             <Link href="/login" className="hover:text-slate-600">Entrar</Link>
             <Link href="/register" className="hover:text-slate-600">Criar conta</Link>

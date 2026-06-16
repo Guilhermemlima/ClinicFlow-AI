@@ -18,7 +18,7 @@ interface OnboardingChecklistProps {
 }
 
 export function OnboardingChecklist({ clinicId, steps }: OnboardingChecklistProps) {
-  const storageKey = `clinicflow:onboarding-dismissed:${clinicId}`
+  const storageKey = `zencli:onboarding-dismissed:${clinicId}`
   const [dismissed, setDismissed] = useState(true) // evita flash antes de checar localStorage
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export function OnboardingChecklist({ clinicId, steps }: OnboardingChecklistProp
         <h2 className="font-semibold text-slate-900">Primeiros passos</h2>
       </div>
       <p className="text-sm text-slate-500 mb-4">
-        Complete {steps.length - doneCount} etapa{steps.length - doneCount !== 1 ? 's' : ''} para aproveitar o ClinicFlow AI ao máximo ({doneCount}/{steps.length})
+        Complete {steps.length - doneCount} etapa{steps.length - doneCount !== 1 ? 's' : ''} para aproveitar o ZenCli ao máximo ({doneCount}/{steps.length})
       </p>
 
       <div className="space-y-2">

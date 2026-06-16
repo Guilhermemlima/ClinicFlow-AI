@@ -6,9 +6,9 @@ export default function NotFound() {
       <div className="text-center max-w-md">
         <div className="inline-flex items-center gap-2 mb-6">
           <div className="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">CF</span>
+            <span className="text-white font-bold text-lg">ZC</span>
           </div>
-          <span className="text-2xl font-bold text-slate-900">ClinicFlow AI</span>
+          <span className="text-2xl font-bold text-slate-900">ZenCli</span>
         </div>
         <h1 className="text-5xl font-bold text-slate-900 mb-2">404</h1>
         <p className="text-slate-600 mb-8">

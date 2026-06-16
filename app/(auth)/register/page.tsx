@@ -82,9 +82,9 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">CF</span>
+              <span className="text-white font-bold text-lg">ZC</span>
             </div>
-            <span className="text-2xl font-bold text-slate-900">ClinicFlow AI</span>
+            <span className="text-2xl font-bold text-slate-900">ZenCli</span>
           </div>
           <p className="text-slate-500">14 dias grátis, sem cartão de crédito</p>
         </div>

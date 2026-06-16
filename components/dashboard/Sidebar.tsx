@@ -35,10 +35,10 @@ export function Sidebar({ clinicName }: SidebarProps) {
       <div className="p-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-sky-500 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">CF</span>
+            <span className="text-white font-bold text-sm">ZC</span>
           </div>
           <div className="min-w-0">
-            <p className="text-white font-semibold text-sm leading-tight truncate">ClinicFlow AI</p>
+            <p className="text-white font-semibold text-sm leading-tight truncate">ZenCli</p>
             <p className="text-slate-400 text-xs truncate">{clinicName}</p>
           </div>
         </div>

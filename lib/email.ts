@@ -22,13 +22,13 @@ export async function sendPasswordResetEmail(
 
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@clinicflow.com.br',
+      from: process.env.EMAIL_FROM || 'noreply@zencli.com.br',
       to,
-      subject: 'Redefinir sua senha — ClinicFlow AI',
+      subject: 'Redefinir sua senha — ZenCli',
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #0f172a;">Redefinir senha</h2>
-          <p style="color: #475569;">Recebemos um pedido para redefinir a senha da sua conta no ClinicFlow AI.</p>
+          <p style="color: #475569;">Recebemos um pedido para redefinir a senha da sua conta no ZenCli.</p>
           <p style="margin: 24px 0;">
             <a href="${resetUrl}" style="background: #0ea5e9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
               Redefinir senha

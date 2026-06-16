@@ -48,7 +48,7 @@ function makeDateTime(daysOffset: number, hour: number, minute = 0): Date {
 }
 
 async function main() {
-  console.log('🌱 Seeding ClinicFlow AI database...')
+  console.log('🌱 Seeding ZenCli database...')
 
   await prisma.message.deleteMany()
   await prisma.reminder.deleteMany()
