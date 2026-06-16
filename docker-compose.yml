@@ -6,7 +6,7 @@ services:
     container_name: clinicflow_db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no seu .env.local}
       POSTGRES_DB: clinicflow
     ports:
       - '5432:5432'
@@ -40,7 +40,7 @@ services:
       - CONFIG_SESSION_PHONE_CLIENT=ClinicFlow
       - CONFIG_SESSION_PHONE_NAME=Chrome
       - AUTHENTICATION_TYPE=apikey
-      - AUTHENTICATION_API_KEY=clinicflow-secret-key
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:?Defina EVOLUTION_API_KEY no seu .env.local}
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
     volumes:
       - evolution_instances:/evolution/instances

@@ -18,7 +18,7 @@ async function getDashboardData(clinicId: string) {
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)
 
-  const [todayAppts, weekAppts, monthAppts, upcomingToday, clinic] = await Promise.all([
+  const [todayAppts, weekAppts, monthAppts, upcomingToday, clinic, confirmingMessages] = await Promise.all([
     prisma.appointment.findMany({
       where: { clinicId, scheduledAt: { gte: todayStart, lte: todayEnd } },
       include: { patient: true },
@@ -41,6 +41,15 @@ async function getDashboardData(clinicId: string) {
       take: 8,
     }),
     prisma.clinic.findUnique({ where: { id: clinicId } }),
+    prisma.message.findMany({
+      where: {
+        patient: { clinicId },
+        direction: 'INBOUND',
+        intent: 'confirm',
+        sentAt: { gte: monthStart, lte: monthEnd },
+      },
+      select: { patientId: true },
+    }),
   ])
 
   const ticketMedio = Number(clinic?.ticketMedio || 200)
@@ -58,7 +67,16 @@ async function getDashboardData(clinicId: string) {
     ['CONFIRMED', 'COMPLETED'].includes(a.status)
   ).length
   const monthNoShows = monthAppts.filter((a) => a.status === 'NO_SHOW').length
-  const noShowsAvoided = monthConfirmed
+
+  // Só conta como "evitado pela automação" quando o paciente confirmou via
+  // WhatsApp — não basta o agendamento estar com status CONFIRMED, pois isso
+  // também inclui confirmações manuais da recepção (não creditáveis ao ROI da IA).
+  const confirmingPatientIds = new Set(confirmingMessages.map((m) => m.patientId))
+  const noShowsAvoided = monthAppts.filter(
+    (a) =>
+      ['CONFIRMED', 'COMPLETED'].includes(a.status) &&
+      confirmingPatientIds.has(a.patientId)
+  ).length
   const confirmationRate = monthTotal > 0 ? Math.round((monthConfirmed / monthTotal) * 100) : 0
 
   const occupancyData = Array.from({ length: 7 }, (_, i) => {

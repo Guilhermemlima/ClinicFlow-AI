@@ -2,6 +2,12 @@ import cron from 'node-cron'
 import { sendPendingReminders } from './sendReminders'
 import { reactivateInactivePatients } from './reactivatePatients'
 
+// NOTA: na Vercel, processos de longa duração (este scheduler) NÃO rodam —
+// funções serverless são encerradas após a resposta, então node-cron nunca
+// dispara em produção lá. Em produção na Vercel, use os crons declarados em
+// vercel.json (app/api/cron/send-reminders e app/api/cron/reactivate-patients).
+// Este arquivo continua útil para rodar localmente (`npm run jobs`) ou em
+// uma plataforma com processo persistente (Railway, Render, um VPS etc).
 console.log('[Scheduler] Starting ClinicFlow AI job scheduler...')
 
 // Run every 15 minutes — send pending reminders

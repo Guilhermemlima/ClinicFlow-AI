@@ -70,6 +70,7 @@ async function main() {
       plan: 'CLINIC',
       ticketMedio: 195,
       isActive: true,
+      evolutionInstance: process.env.EVOLUTION_INSTANCE_NAME || 'clinicflow',
     },
   })
 

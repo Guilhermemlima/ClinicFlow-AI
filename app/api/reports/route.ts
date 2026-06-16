@@ -29,7 +29,31 @@ export async function GET(req: NextRequest) {
   const confirmed = appointments.filter((a) =>
     ['CONFIRMED', 'COMPLETED'].includes(a.status)
   ).length
-  const noShowsAvoided = confirmed
+
+  // "No-shows evitados" deve medir o impacto real da automação: só conta
+  // consultas confirmadas cujo paciente de fato respondeu via WhatsApp com
+  // intenção de confirmação. Contar todas as consultas com status CONFIRMED
+  // infla o número, pois inclui confirmações manuais feitas pela recepção
+  // que ocorreriam de qualquer forma, sem o WhatsApp.
+  const confirmedAppointments = appointments.filter((a) =>
+    ['CONFIRMED', 'COMPLETED'].includes(a.status)
+  )
+  const confirmingPatientIds = new Set(
+    (
+      await prisma.message.findMany({
+        where: {
+          patient: { clinicId },
+          direction: 'INBOUND',
+          intent: 'confirm',
+          sentAt: { gte: since },
+        },
+        select: { patientId: true },
+      })
+    ).map((m) => m.patientId)
+  )
+  const noShowsAvoided = confirmedAppointments.filter((a) =>
+    confirmingPatientIds.has(a.patientId)
+  ).length
 
   const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } })
   const ticketMedio = Number(clinic?.ticketMedio || 200)

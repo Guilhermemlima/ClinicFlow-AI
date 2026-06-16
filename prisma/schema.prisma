@@ -19,6 +19,7 @@ model Clinic {
   stripeSubId      String?
   isActive         Boolean  @default(true)
   ticketMedio      Decimal? @db.Decimal(10, 2)
+  evolutionInstance String? @unique
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

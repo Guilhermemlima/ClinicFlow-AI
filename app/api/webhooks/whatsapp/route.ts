@@ -5,6 +5,15 @@ import { sendMessage, substituteTemplateVariables } from '@/lib/whatsapp'
 import { formatDateTime } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
+  // Autenticação do webhook — Evolution API envia o segredo configurado em
+  // WEBHOOK_GLOBAL_API_KEY no header abaixo. Sem isso, qualquer pessoa pode
+  // forjar mensagens e confirmar/cancelar consultas de qualquer paciente.
+  const providedSecret = req.headers.get('x-evolution-hmac-sha256') || req.headers.get('apikey')
+  const expectedSecret = process.env.EVOLUTION_WEBHOOK_SECRET
+  if (!expectedSecret || providedSecret !== expectedSecret) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
     const body = await req.json()
 
@@ -18,9 +27,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    // Isolamento multi-tenant: cada clínica tem sua própria instância da
+    // Evolution API. O nome da instância vem no payload do webhook e é
+    // usado para resolver a clínica antes de qualquer busca de paciente —
+    // assim uma mensagem nunca pode "vazar" para o paciente de outra clínica.
+    const instanceName = body.instance
+    if (!instanceName) {
+      return NextResponse.json({ ok: true })
+    }
+
+    const clinic = await prisma.clinic.findUnique({
+      where: { evolutionInstance: instanceName },
+    })
+
+    if (!clinic || !clinic.isActive) {
+      return NextResponse.json({ ok: true })
+    }
+
     const patient = await prisma.patient.findFirst({
-      where: { phone: { contains: phone } },
-      include: { clinic: true },
+      where: { clinicId: clinic.id, phone: { contains: phone } },
     })
 
     if (!patient) {
@@ -42,6 +67,7 @@ export async function POST(req: NextRequest) {
     const lastAppointment = await prisma.appointment.findFirst({
       where: {
         patientId: patient.id,
+        clinicId: clinic.id,
         status: { in: ['SCHEDULED', 'CONFIRMED'] },
         scheduledAt: { gte: new Date() },
       },
@@ -64,7 +90,7 @@ export async function POST(req: NextRequest) {
               nome_paciente: patient.name.split(' ')[0],
               data_consulta: formatDateTime(lastAppointment.scheduledAt),
               procedimento: lastAppointment.procedure || 'Consulta',
-              nome_clinica: patient.clinic.name,
+              nome_clinica: clinic.name,
             })
           : `Confirmação recebida! Até ${formatDateTime(lastAppointment.scheduledAt)} 😊`
 
