@@ -77,9 +77,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Senha
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-700">
+                  Senha
+                </label>
+                <Link href="/forgot-password" className="text-xs text-sky-500 hover:text-sky-600 font-medium">
+                  Esqueci minha senha
+                </Link>
+              </div>
               <input
                 {...register('password')}
                 type="password"

@@ -15,6 +15,7 @@ export async function GET() {
       ticketMedio: true,
       whatsappNumber: true,
       plan: true,
+      businessHours: true,
     },
   })
 
@@ -25,7 +26,7 @@ export async function PATCH(req: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, specialty, phone, ticketMedio, whatsappNumber } = await req.json()
+  const { name, specialty, phone, ticketMedio, whatsappNumber, businessHours } = await req.json()
 
   const clinic = await prisma.clinic.update({
     where: { id: session.user.clinicId },
@@ -35,6 +36,7 @@ export async function PATCH(req: NextRequest) {
       phone: phone || undefined,
       ticketMedio: ticketMedio ? ticketMedio : undefined,
       whatsappNumber: whatsappNumber || undefined,
+      businessHours: businessHours ?? undefined,
     },
   })
 

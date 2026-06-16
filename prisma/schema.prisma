@@ -20,6 +20,7 @@ model Clinic {
   isActive         Boolean  @default(true)
   ticketMedio      Decimal? @db.Decimal(10, 2)
   evolutionInstance String? @unique
+  businessHours    Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -39,6 +40,8 @@ model User {
   clinicId  String
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
   createdAt DateTime @default(now())
+
+  resetTokens PasswordResetToken[]
 }
 
 model Patient {
@@ -57,6 +60,9 @@ model Patient {
 
   appointments Appointment[]
   messages     Message[]
+
+  @@index([phone])
+  @@index([clinicId])
 }
 
 model Appointment {
@@ -111,6 +117,18 @@ model MessageTemplate {
   createdAt   DateTime     @default(now())
 
   automations Automation[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Message {

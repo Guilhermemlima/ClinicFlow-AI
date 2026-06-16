@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createTrialSubscription } from '@/lib/stripe'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const schema = z.object({
   clinicName: z.string().min(2),
@@ -13,6 +15,17 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  // No máximo 5 registros por IP a cada 10 minutos — evita um atacante
+  // criar milhares de clínicas falsas em massa.
+  const ip = getClientIp(req)
+  const { allowed } = checkRateLimit(`register:${ip}`, 5, 10 * 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Muitas tentativas. Tente novamente em alguns minutos.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -106,6 +119,20 @@ export async function POST(req: NextRequest) {
         },
       ],
     })
+
+    // Cria o cliente + assinatura em trial no Stripe. Sem isso, a clínica
+    // nunca tem stripeCustomerId/stripeSubId e fica em trial eterno, já
+    // que não há nada para cobrar quando o período de teste acabar.
+    const stripeResult = await createTrialSubscription(email, ownerName, plan)
+    if (stripeResult) {
+      await prisma.clinic.update({
+        where: { id: clinic.id },
+        data: {
+          stripeCustomerId: stripeResult.customerId,
+          stripeSubId: stripeResult.subscriptionId,
+        },
+      })
+    }
 
     return NextResponse.json({ success: true, clinicId: clinic.id }, { status: 201 })
   } catch (err) {

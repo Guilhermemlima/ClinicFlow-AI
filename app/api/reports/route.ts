@@ -12,23 +12,25 @@ export async function GET(req: NextRequest) {
   const clinicId = session.user.clinicId
 
   const since = subDays(new Date(), period)
+  const appointmentsWhere = { clinicId, scheduledAt: { gte: since } }
 
-  const appointments = await prisma.appointment.findMany({
-    where: { clinicId, scheduledAt: { gte: since } },
-    include: { patient: true },
-  })
+  // Limite de segurança: 90 dias × 10 clínicas grandes rodando o mesmo
+  // período pode facilmente passar de milhares de linhas por request. Os
+  // totais usam count() (sempre exatos); só os gráficos detalhados abaixo
+  // (semana/horário/procedimento) usam a amostra limitada por `take`.
+  const REPORT_ROW_CAP = 5000
 
-  const messages = await prisma.message.findMany({
-    where: {
-      patient: { clinicId },
-      sentAt: { gte: since },
-    },
-  })
-
-  const total = appointments.length
-  const confirmed = appointments.filter((a) =>
-    ['CONFIRMED', 'COMPLETED'].includes(a.status)
-  ).length
+  const [total, confirmed, appointments] = await Promise.all([
+    prisma.appointment.count({ where: appointmentsWhere }),
+    prisma.appointment.count({
+      where: { ...appointmentsWhere, status: { in: ['CONFIRMED', 'COMPLETED'] } },
+    }),
+    prisma.appointment.findMany({
+      where: appointmentsWhere,
+      select: { id: true, patientId: true, status: true, scheduledAt: true, procedure: true },
+      take: REPORT_ROW_CAP,
+    }),
+  ])
 
   // "No-shows evitados" deve medir o impacto real da automação: só conta
   // consultas confirmadas cujo paciente de fato respondeu via WhatsApp com
@@ -72,12 +74,13 @@ export async function GET(req: NextRequest) {
     },
   })
 
-  const inboundMessages = messages.filter((m) => m.direction === 'INBOUND')
-  const outboundMessages = messages.filter((m) => m.direction === 'OUTBOUND')
+  const messagesWhere = { patient: { clinicId }, sentAt: { gte: since } }
+  const [inboundCount, outboundCount] = await Promise.all([
+    prisma.message.count({ where: { ...messagesWhere, direction: 'INBOUND' } }),
+    prisma.message.count({ where: { ...messagesWhere, direction: 'OUTBOUND' } }),
+  ])
   const responseRate =
-    outboundMessages.length > 0
-      ? Math.round((inboundMessages.length / outboundMessages.length) * 100)
-      : 0
+    outboundCount > 0 ? Math.round((inboundCount / outboundCount) * 100) : 0
 
   const weeklyGroups: Record<string, { total: number; confirmed: number }> = {}
   appointments.forEach((a) => {

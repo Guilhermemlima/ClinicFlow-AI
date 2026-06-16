@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Send, Filter } from 'lucide-react'
+import { Plus, Send, Filter, Check, X } from 'lucide-react'
 import { AppointmentForm } from '@/components/appointments/AppointmentForm'
 import { StatusBadge } from '@/components/appointments/StatusBadge'
 import { formatDateTimeFull, formatCurrency } from '@/lib/utils'
@@ -56,6 +56,15 @@ export default function AppointmentsPage() {
       body: JSON.stringify({ appointmentId }),
     })
     setSending(null)
+    fetchAppointments()
+  }
+
+  async function updateStatus(appointmentId: string, status: 'COMPLETED' | 'NO_SHOW') {
+    await fetch(`/api/appointments/${appointmentId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
     fetchAppointments()
   }
 
@@ -167,14 +176,32 @@ export default function AppointmentsPage() {
                   </td>
                   <td className="px-5 py-4">
                     {['SCHEDULED', 'CONFIRMED'].includes(appt.status) && (
-                      <button
-                        onClick={() => sendReminderNow(appt.id)}
-                        disabled={sending === appt.id}
-                        className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium disabled:opacity-50"
-                      >
-                        <Send className="w-3 h-3" />
-                        {sending === appt.id ? 'Enviando...' : 'Lembrete'}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => sendReminderNow(appt.id)}
+                          disabled={sending === appt.id}
+                          className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-700 font-medium disabled:opacity-50"
+                        >
+                          <Send className="w-3 h-3" />
+                          {sending === appt.id ? 'Enviando...' : 'Lembrete'}
+                        </button>
+                        <button
+                          onClick={() => updateStatus(appt.id, 'COMPLETED')}
+                          className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+                          title="Marcar como realizada"
+                        >
+                          <Check className="w-3 h-3" />
+                          Concluir
+                        </button>
+                        <button
+                          onClick={() => updateStatus(appt.id, 'NO_SHOW')}
+                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 font-medium"
+                          title="Paciente não veio"
+                        >
+                          <X className="w-3 h-3" />
+                          Não veio
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

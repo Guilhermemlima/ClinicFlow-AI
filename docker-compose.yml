@@ -32,7 +32,10 @@ services:
       - LOG_LEVEL=ERROR
       - LOG_COLOR=true
       - DEL_INSTANCE=false
-      - DATABASE_ENABLED=false
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://postgres:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no seu .env.local}@postgres:5432/clinicflow?schema=evolution
+      - DATABASE_SAVE_DATA_INSTANCE=true
       - REDIS_ENABLED=false
       - RABBITMQ_ENABLED=false
       - WEBSOCKET_ENABLED=true
@@ -45,6 +48,9 @@ services:
     volumes:
       - evolution_instances:/evolution/instances
       - evolution_store:/evolution/store
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

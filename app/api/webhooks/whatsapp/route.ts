@@ -3,8 +3,18 @@ import { prisma } from '@/lib/prisma'
 import { classifyIntent } from '@/lib/openai'
 import { sendMessage, substituteTemplateVariables } from '@/lib/whatsapp'
 import { formatDateTime } from '@/lib/utils'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
+  // Limite generoso (uma clínica movimentada pode receber várias mensagens
+  // por segundo), mas suficiente para impedir que alguém sature o
+  // classificador de intenção (chamadas pagas à OpenAI) com flood de requests.
+  const ip = getClientIp(req)
+  const { allowed } = checkRateLimit(`webhook:${ip}`, 120, 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   // Autenticação do webhook — Evolution API envia o segredo configurado em
   // WEBHOOK_GLOBAL_API_KEY no header abaixo. Sem isso, qualquer pessoa pode
   // forjar mensagens e confirmar/cancelar consultas de qualquer paciente.

@@ -1,7 +1,13 @@
 import { prisma } from '../lib/prisma'
 import { sendMessage, substituteTemplateVariables } from '../lib/whatsapp'
 import { formatDateTime } from '../lib/utils'
+import { mapWithConcurrency } from '../lib/concurrency'
 import { addMinutes } from 'date-fns'
+
+// Lembretes processados em paralelo por vez. Alto suficiente para não
+// demorar minutos com centenas de lembretes pendentes, baixo suficiente
+// para não estourar limites de taxa da Evolution API/WhatsApp.
+const REMINDER_CONCURRENCY = 10
 
 export async function sendPendingReminders() {
   const now = new Date()
@@ -29,7 +35,7 @@ export async function sendPendingReminders() {
 
   console.log(`[sendReminders] Found ${pendingReminders.length} pending reminders`)
 
-  for (const reminder of pendingReminders) {
+  await mapWithConcurrency(pendingReminders, REMINDER_CONCURRENCY, async (reminder) => {
     const { appointment } = reminder
     const { patient, clinic } = appointment
 
@@ -43,7 +49,7 @@ export async function sendPendingReminders() {
         where: { id: reminder.id },
         data: { status: 'FAILED' },
       })
-      continue
+      return
     }
 
     const templateBody = automation.template.body
@@ -84,5 +90,5 @@ export async function sendPendingReminders() {
         data: { status: 'FAILED' },
       })
     }
-  }
+  })
 }

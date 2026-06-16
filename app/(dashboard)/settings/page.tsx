@@ -19,6 +19,17 @@ interface ClinicSettings {
   whatsappNumber: string
 }
 
+const WEEK_DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'] as const
+
+type BusinessHours = Record<string, { from: string; to: string; closed: boolean }>
+
+function defaultBusinessHours(): BusinessHours {
+  return WEEK_DAYS.reduce((acc, day) => {
+    acc[day] = { from: '08:00', to: '18:00', closed: day === 'Sábado' }
+    return acc
+  }, {} as BusinessHours)
+}
+
 export default function SettingsPage() {
   const [tab, setTab] = useState('clinic')
   const [settings, setSettings] = useState<ClinicSettings>({
@@ -33,10 +44,16 @@ export default function SettingsPage() {
   const [waStatus, setWaStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown')
   const [qrCode, setQrCode] = useState<string | null>(null)
   const [loadingQR, setLoadingQR] = useState(false)
+  const [businessHours, setBusinessHours] = useState<BusinessHours>(defaultBusinessHours())
+  const [savingHours, setSavingHours] = useState(false)
+  const [savedHours, setSavedHours] = useState(false)
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((d) => {
       if (d.clinic) setSettings(d.clinic)
+      if (d.clinic?.businessHours) {
+        setBusinessHours({ ...defaultBusinessHours(), ...d.clinic.businessHours })
+      }
     })
     fetch('/api/whatsapp/status').then((r) => r.json()).then((d) => {
       setWaStatus(d.status || 'unknown')
@@ -53,6 +70,22 @@ export default function SettingsPage() {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  function updateDayHours(day: string, field: 'from' | 'to' | 'closed', value: string | boolean) {
+    setBusinessHours((prev) => ({ ...prev, [day]: { ...prev[day], [field]: value } }))
+  }
+
+  async function saveBusinessHours() {
+    setSavingHours(true)
+    await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ businessHours }),
+    })
+    setSavingHours(false)
+    setSavedHours(true)
+    setTimeout(() => setSavedHours(false), 2000)
   }
 
   async function loadQRCode() {
@@ -192,29 +225,45 @@ export default function SettingsPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-lg">
           <h2 className="font-semibold text-slate-900 mb-5">Horário de Funcionamento</h2>
           <div className="space-y-3">
-            {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day) => (
-              <div key={day} className="flex items-center gap-4">
-                <span className="w-20 text-sm text-slate-600">{day}</span>
-                <input
-                  type="time"
-                  defaultValue="08:00"
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-                <span className="text-slate-400 text-sm">até</span>
-                <input
-                  type="time"
-                  defaultValue="18:00"
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-            ))}
+            {WEEK_DAYS.map((day) => {
+              const dayHours = businessHours[day] ?? { from: '08:00', to: '18:00', closed: false }
+              return (
+                <div key={day} className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 w-24">
+                    <input
+                      type="checkbox"
+                      checked={!dayHours.closed}
+                      onChange={(e) => updateDayHours(day, 'closed', !e.target.checked)}
+                      className="rounded border-slate-300"
+                    />
+                    <span className="text-sm text-slate-600">{day}</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={dayHours.from}
+                    disabled={dayHours.closed}
+                    onChange={(e) => updateDayHours(day, 'from', e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                  <span className="text-slate-400 text-sm">até</span>
+                  <input
+                    type="time"
+                    value={dayHours.to}
+                    disabled={dayHours.closed}
+                    onChange={(e) => updateDayHours(day, 'to', e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                </div>
+              )
+            })}
           </div>
           <button
-            onClick={saveSettings}
-            className="mt-5 flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+            onClick={saveBusinessHours}
+            disabled={savingHours}
+            className="mt-5 flex items-center gap-2 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
           >
             <Save className="w-4 h-4" />
-            Salvar horários
+            {savedHours ? 'Salvo!' : savingHours ? 'Salvando...' : 'Salvar horários'}
           </button>
         </div>
       )}
