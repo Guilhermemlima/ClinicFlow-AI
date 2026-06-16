@@ -4,6 +4,11 @@ import type { NextAuthConfig } from 'next-auth'
 // qualquer dependência Node.js. Usada pelo middleware (Edge) e estendida
 // pela config completa em auth.ts (Node.js, usada nas rotas/server actions).
 export const authConfig: NextAuthConfig = {
+  // Na Vercel isso é detectado automaticamente (via a env var VERCEL), mas
+  // em qualquer outro host (Railway, VPS, `next start` local) o NextAuth
+  // recusa a requisição com "UntrustedHost" sem isso — e a sessão nunca
+  // resolve, quebrando o login inteiro fora da Vercel.
+  trustHost: true,
   pages: {
     signIn: '/login',
     error: '/login',

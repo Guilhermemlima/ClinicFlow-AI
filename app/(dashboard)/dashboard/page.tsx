@@ -1,9 +1,11 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { getConnectionStatus } from '@/lib/whatsapp'
 import { ROIBanner } from '@/components/dashboard/ROIBanner'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { AppointmentTable } from '@/components/dashboard/AppointmentTable'
 import { OccupancyChart } from '@/components/dashboard/OccupancyChart'
+import { OnboardingChecklist, type OnboardingStep } from '@/components/dashboard/OnboardingChecklist'
 import { Calendar, CheckCircle, XCircle, TrendingUp } from 'lucide-react'
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -18,7 +20,17 @@ async function getDashboardData(clinicId: string) {
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)
 
-  const [todayAppts, weekAppts, monthAppts, upcomingToday, clinic, confirmingMessages] = await Promise.all([
+  const [
+    todayAppts,
+    weekAppts,
+    monthAppts,
+    upcomingToday,
+    clinic,
+    confirmingMessages,
+    patientsCount,
+    activeAutomationsCount,
+    waStatus,
+  ] = await Promise.all([
     prisma.appointment.findMany({
       where: { clinicId, scheduledAt: { gte: todayStart, lte: todayEnd } },
       include: { patient: true },
@@ -50,6 +62,9 @@ async function getDashboardData(clinicId: string) {
       },
       select: { patientId: true },
     }),
+    prisma.patient.count({ where: { clinicId } }),
+    prisma.automation.count({ where: { clinicId, isActive: true } }),
+    getConnectionStatus(),
   ])
 
   const ticketMedio = Number(clinic?.ticketMedio || 200)
@@ -94,6 +109,30 @@ async function getDashboardData(clinicId: string) {
     }
   })
 
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      id: 'whatsapp',
+      label: 'Conectar o WhatsApp da clínica',
+      done: waStatus === 'connected',
+      href: '/settings',
+      cta: 'Conectar',
+    },
+    {
+      id: 'patient',
+      label: 'Cadastrar seu primeiro paciente',
+      done: patientsCount > 0,
+      href: '/patients',
+      cta: 'Cadastrar',
+    },
+    {
+      id: 'automation',
+      label: 'Ativar uma automação de lembrete',
+      done: activeAutomationsCount > 0,
+      href: '/automations',
+      cta: 'Ativar',
+    },
+  ]
+
   return {
     todayScheduled,
     todayConfirmed,
@@ -108,6 +147,7 @@ async function getDashboardData(clinicId: string) {
     ticketMedio,
     occupancyData,
     upcomingToday,
+    onboardingSteps,
   }
 }
 
@@ -123,6 +163,8 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
         <p className="text-slate-500 text-sm mt-1">Visão geral da sua clínica</p>
       </div>
+
+      <OnboardingChecklist clinicId={clinicId} steps={data.onboardingSteps} />
 
       <ROIBanner noShowsAvoided={data.noShowsAvoided} ticketMedio={data.ticketMedio} />
 

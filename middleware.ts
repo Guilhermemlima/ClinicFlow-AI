@@ -10,7 +10,8 @@ export default auth((req) => {
     req.nextUrl.pathname.startsWith('/register') ||
     req.nextUrl.pathname.startsWith('/forgot-password') ||
     req.nextUrl.pathname.startsWith('/reset-password')
-  const isDashboard = req.nextUrl.pathname === '/' ||
+  // "/" agora é a landing page pública — não faz parte da área logada.
+  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard') ||
     req.nextUrl.pathname.startsWith('/appointments') ||
     req.nextUrl.pathname.startsWith('/patients') ||
     req.nextUrl.pathname.startsWith('/automations') ||
@@ -22,7 +23,7 @@ export default auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL('/', req.url))
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   return NextResponse.next()

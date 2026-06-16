@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/appointments', label: 'Consultas', icon: Calendar },
   { href: '/patients', label: 'Pacientes', icon: Users },
   { href: '/automations', label: 'Automações', icon: Zap },
